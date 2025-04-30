@@ -16,6 +16,7 @@ const Conversations = ({ setActiveView }) => {
   const { userConversations } = useSelector((state) => state.conversation);
   const { user } = useSelector((state) => state.auth);
   const [sortedConversations, setSortedConversations] = useState([]);
+  const { onlineUsers } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -47,6 +48,10 @@ const Conversations = ({ setActiveView }) => {
 
   const getOtherParticipant = (conversation) => {
     return conversation?.participants?.find((p) => p.id !== user?.id);
+  };
+
+  const isUserOnline = (userId) => {
+    return onlineUsers?.some((onlineId) => parseInt(onlineId) === userId);
   };
 
   return (
@@ -107,21 +112,28 @@ const Conversations = ({ setActiveView }) => {
                   }}
                   className="w-full mt-2 flex gap-2 bg-[#16181C] p-2 rounded-md cursor-pointer hover:bg-[#1e2024]"
                 >
-                  <div className="min-w-10 max-w-10 w-full h-10 rounded-full overflow-hidden">
+                  <div className="relative min-w-10 max-w-10 w-full h-10 rounded-full">
                     <img
                       src={
                         participant?.profil_picture ||
                         "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
                       }
                       alt="userProfile"
-                      className="w-full h-full object-cover object-center"
+                      className="w-full h-full object-cover object-center rounded-full"
                     />
+                    <span
+                      className={`absolute -bottom-1.5 -left-1.5 w-4 h-4 rounded-full border-2 shadow-lg ${
+                        isUserOnline(participant.id)
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      } border-[#16181C]`}
+                    ></span>
                   </div>
+
                   <div className="flex flex-col">
                     <span className="text-sm font-bold">
                       {participant?.username}
                     </span>
-
                     <span className="text-xs text-gray-500">
                       {new Date(conversation?.created_at).toLocaleString()}
                     </span>

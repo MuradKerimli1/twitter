@@ -25,11 +25,13 @@ export const initializeSocket = (server: http.Server) => {
   io.on("connection", (socket: Socket & { user?: any }) => {
     if (socket.user) {
       userSocketMap[socket.user.id] = socket.id;
+      io.emit("onlineUsers", Object.keys(userSocketMap));
     }
 
     socket.on("disconnect", () => {
       if (socket.user) {
         delete userSocketMap[socket.user.id];
+        io.emit("onlineUsers", Object.keys(userSocketMap));
       }
     });
   });

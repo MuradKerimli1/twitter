@@ -9,7 +9,11 @@ import { showNotification } from "./lib/showNotification";
 import { setNotfication } from "./store/slices/notfication.slice";
 import useFetchNotfications from "./hooks/fetchNotfication";
 import { setTweet, updateSelectedTweet } from "./store/slices/tweet.slice";
-import { setSelectedUser, updateUser } from "./store/slices/auth.slice";
+import {
+  setOnlineUsers,
+  setSelectedUser,
+  updateUser,
+} from "./store/slices/auth.slice";
 import {
   setUserConversations,
   updatedMessages,
@@ -184,6 +188,10 @@ const App = () => {
       dispatch(setUserConversations(updatedConversations));
     });
 
+    socket.on("onlineUsers", (data) => {
+      dispatch(setOnlineUsers(data));
+    });
+
     dispatch(setSocket(socket));
 
     return () => {
@@ -195,6 +203,7 @@ const App = () => {
       socket.off("followOrUnfollow");
       socket.off("newMessage");
       socket.off("newConversation");
+      socket.off("onlineUsers");
       socket.disconnect();
       dispatch(clearSocket());
     };
