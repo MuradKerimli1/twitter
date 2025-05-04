@@ -120,4 +120,20 @@ export const summaryApi = {
     url: "/premium/viewers",
     method: "get",
   },
+  fetchPackages: {
+    url: "/premium/packages",
+    method: "get",
+  },
+  deletePackage: (id) => ({
+    url: `/premium/package/delete/${id}`,
+    method: "delete",
+  }),
+  createPackage: {
+    url: "/premium/create",
+    method: "post",
+  },
+  setUpdatePackage: (id) => ({
+    url: `/premium/package/update/${id}`,
+    method: "put",
+  }),
 };

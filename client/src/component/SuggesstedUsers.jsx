@@ -47,8 +47,8 @@ const SuggesstedUsers = () => {
       {!loading && suggestedUsers.length > 0 && (
         <div>
           <div className=" mb-3">
-            {suggestedUsers.map((s) => (
-              <div className="grid gap-3 ">
+            {suggestedUsers.map((s, index) => (
+              <div key={index} className="grid gap-3 ">
                 <SuggestedChild key={s.id} data={s} />
               </div>
             ))}

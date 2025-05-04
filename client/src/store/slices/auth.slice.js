@@ -5,6 +5,7 @@ const initialState = {
   selectedUser: null,
   onlineUsers: [],
   visitors: [],
+  packages: [],
 };
 
 export const authSlice = createSlice({
@@ -35,6 +36,12 @@ export const authSlice = createSlice({
     clearVisitors: (state) => {
       state.visitors = [];
     },
+    setPackages: (state, action) => {
+      state.packages = action.payload;
+    },
+    clearPackages: (state) => {
+      state.packages = [];
+    },
   },
 });
 
@@ -47,6 +54,8 @@ export const {
   setOnlineUsers,
   setVisitors,
   clearVisitors,
+  setPackages,
+  clearPackages,
 } = authSlice.actions;
 
 export default authSlice.reducer;

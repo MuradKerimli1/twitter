@@ -21,3 +21,9 @@ premiumRouter.delete(
   adminMiddleware,
   controller.deletePremiumPackage
 );
+premiumRouter.put(
+  "/package/update/:id",
+  auth,
+  adminMiddleware,
+  controller.updatePremiumPackage
+);

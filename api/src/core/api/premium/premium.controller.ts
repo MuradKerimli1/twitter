@@ -64,7 +64,6 @@ const buyPremiumPackage = async (
 
     // stripe payment logic would go here
     // For now, we will assume the payment is successful
-    
 
     res.status(200).json({
       success: true,
@@ -84,7 +83,7 @@ const getPremiumPackages = async (
 ) => {
   try {
     const packages = await PremiumPackage.find({
-      order: { createdAt: "DESC" },
+      order: { createdAt: "ASC" },
     });
     if (!packages) {
       return next(new appError("No packages found", 404));
@@ -102,8 +101,9 @@ const createPremiumPackage = async (
   next: NextFunction
 ) => {
   try {
-    const { name, durationInDays, price, description, currency } = req.body;
-    if (!name || !durationInDays || !price || !currency) {
+    const { name, durationInDays, price, description, currency, features } =
+      req.body;
+    if (!name || !durationInDays || !price || !currency || !features) {
       return next(new appError("Please provide all required fields", 400));
     }
     if (currency && !Object.values(Currency).includes(currency.toUpperCase())) {
@@ -129,6 +129,7 @@ const createPremiumPackage = async (
       durationInDays,
       price,
       description,
+      features,
       currency: currency.toUpperCase(),
     }).save();
 
@@ -173,6 +174,43 @@ const deletePremiumPackage = async (
   }
 };
 
+const updatePremiumPackage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const packageId = Number(req.params.id);
+    if (!packageId) {
+      return next(new appError("Package ID is required", 400));
+    }
+    const packageToUpdate = await PremiumPackage.findOne({
+      where: { id: packageId },
+    });
+    if (!packageToUpdate) {
+      return next(new appError("Package not found", 404));
+    }
+    const { name, durationInDays, price, description, currency, features } =
+      req.body;
+    if (name) packageToUpdate.name = name;
+    if (durationInDays) packageToUpdate.durationInDays = durationInDays;
+    if (price) packageToUpdate.price = price;
+    if (description) packageToUpdate.description = description;
+    if (currency) packageToUpdate.currency = currency.toUpperCase();
+    if (features) packageToUpdate.features = features;
+
+    await packageToUpdate.save();
+    res.status(200).json({
+      success: true,
+      message: "Package updated successfully",
+      package: packageToUpdate,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
 export const premiumController = () => {
   return {
     profileViewers,
@@ -180,5 +218,6 @@ export const premiumController = () => {
     getPremiumPackages,
     createPremiumPackage,
     deletePremiumPackage,
+    updatePremiumPackage,
   };
 };

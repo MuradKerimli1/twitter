@@ -21,6 +21,9 @@ export class PremiumPackage extends BaseEntity {
   @Column({ type: "int" })
   durationInDays: number;
 
+  @Column("simple-array")
+  features: string[];
+
   @Column({ type: "decimal", precision: 10, scale: 2 })
   price: number;
 
