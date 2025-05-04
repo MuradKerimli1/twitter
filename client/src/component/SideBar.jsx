@@ -83,6 +83,9 @@ const SideBar = () => {
       case "Mesajlar":
         navigate(`/messages`);
         break;
+      case "Premium":
+        navigate(`/premium`);
+        break;
 
       default:
         break;

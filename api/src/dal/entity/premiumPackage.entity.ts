@@ -2,46 +2,36 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  BaseEntity,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
-
-enum PremiumPackageType {
-  BASIC = "basic",
-  PREMIUM = "premium",
-}
-
-enum DurationUnit {
-  DAY = "day",
-  MONTH = "month",
-  YEAR = "year",
-}
+import { UserPremiumHistory } from "./UserPremiumHistory.entity";
+import { Currency } from "../enums/currencyEnum";
 
 @Entity()
-export class PremiumPackage {
+export class PremiumPackage extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
-  @Column()
+  @Column({ type: "int" })
+  durationInDays: number;
+
+  @Column({ type: "decimal", precision: 10, scale: 2 })
   price: number;
 
-  @Column("simple-array")
-  features: string[];
+  @Column({ type: "enum", enum: Currency, default: Currency.AZN })
+  currency: Currency;
 
-  @Column({ type: "enum", enum: PremiumPackageType })
-  type: PremiumPackageType;
+  @Column({ type: "text", nullable: true })
+  description: string;
 
-  @Column({ type: "int" })
-  duration: number;
-
-  @Column({ type: "enum", enum: DurationUnit, default: DurationUnit.MONTH })
-  durationUnit: DurationUnit;
-
-  @Column({ default: true })
-  isActive: boolean;
+  @OneToMany(() => UserPremiumHistory, (uph) => uph.package)
+  userPremiumHistories: UserPremiumHistory[];
 
   @CreateDateColumn()
   createdAt: Date;

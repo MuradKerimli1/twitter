@@ -13,6 +13,7 @@ import { Gender } from "../enums/genderEnum";
 import { UserRole } from "../enums/userRole";
 import { Tweet } from "./tweet.entity";
 import { Notification } from "./notfication.entity";
+import { UserPremiumHistory } from "./UserPremiumHistory.entity";
 
 @Entity()
 export class User extends BaseEntity {
@@ -63,6 +64,11 @@ export class User extends BaseEntity {
 
   @Column({ type: "timestamp", nullable: true })
   premiumExpiredAt: Date;
+
+  @OneToMany(() => UserPremiumHistory, (uph) => uph.user, {
+    cascade: true,
+  })
+  premiumHistories: UserPremiumHistory[];
 
   @ManyToMany(() => User, { onDelete: "CASCADE" })
   @JoinTable()

@@ -1,4 +1,4 @@
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   cancelNotficationLoading,
   setNotfication,
@@ -11,7 +11,11 @@ import { useEffect } from "react";
 
 const useFetchNotfications = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
   useEffect(() => {
+    if (!user) return;
+
     const fetchNotfication = async () => {
       dispatch(startNotficationLoading());
       try {
@@ -25,8 +29,9 @@ const useFetchNotfications = () => {
         dispatch(cancelNotficationLoading());
       }
     };
+
     fetchNotfication();
-  }, [dispatch]);
-  
+  }, [dispatch, user]);
 };
+
 export default useFetchNotfications;

@@ -13,6 +13,9 @@ import SelectedTweet from "../component/SelectedTweet";
 import Profile from "../page/Profile";
 import SuggestedUsers from "../page/SuggestedUsers";
 import Messages from "../page/Messages";
+import Premium from "../page/Premium";
+import PremiumLayout from "../layout/PremiumLayout";
+import Visitors from "../page/Visitors";
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +49,20 @@ export const router = createBrowserRouter([
           {
             path: "messages",
             element: <Messages />,
+          },
+          {
+            path: "premium",
+            element: <PremiumLayout />,
+            children: [
+              {
+                path: "",
+                element: <Premium />,
+              },
+              {
+                path: "visitors",
+                element: <Visitors />,
+              },
+            ],
           },
         ],
       },

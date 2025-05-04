@@ -49,9 +49,6 @@ const SuggestedUsers = () => {
     );
   }
 
-  console.log(suggestedUsers.length);
-  
-
   return (
     <div className="p-2">
       <div

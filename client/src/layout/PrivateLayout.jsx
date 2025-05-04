@@ -13,7 +13,7 @@ const PrivateLayout = () => {
   }
 
   return (
-    <div className="bg-black text-white min-h-screen flex">
+    <div className="bg-black text-white min-h-screen flex overflow-hidden">
       <SideBar />
       <div className="ml-20 sm:ml-52 min-h-screen flex w-full">
         <div

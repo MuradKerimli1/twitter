@@ -9,7 +9,6 @@ import bcrypt from "bcrypt";
 import { Gender } from "../../../dal/enums/genderEnum";
 import io, { getReceiverSocketId } from "../../../socket/socket";
 
-// socket
 const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = Number(req.params.id);
@@ -40,7 +39,15 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
       ) {
         user.viewers.push(viewerUser);
         await user.save();
-        // socket son
+
+        const receiverId = getReceiverSocketId(user.id);
+        if (receiverId) {
+          io.to(receiverId).emit("newViewer", {
+            viewer: {
+              viewerUser,
+            },
+          });
+        }
 
         if (user.isPremium) {
           const notification = Notification.create({

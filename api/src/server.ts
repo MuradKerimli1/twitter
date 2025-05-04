@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { mainRouter } from "./core/router/router";
 import { initializeSocket } from "./socket/socket";
+import { startViewerCleanupJob } from "./core/cron/cron";
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +27,8 @@ AppDataSource.initialize()
         credentials: true,
       })
     );
+
+    startViewerCleanupJob();
 
     app.use("/api/v1", mainRouter);
 

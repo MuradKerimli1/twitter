@@ -116,4 +116,8 @@ export const summaryApi = {
     url: `/message/userConversations`,
     method: "get",
   },
+  fetchVisitors: {
+    url: "/premium/viewers",
+    method: "get",
+  },
 };

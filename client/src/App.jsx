@@ -1,4 +1,4 @@
-import { data, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import useResetScrollTopOnLocationChange from "./hooks/useResetScrollTop";
 import { useEffect, useRef } from "react";
@@ -12,6 +12,7 @@ import { setTweet, updateSelectedTweet } from "./store/slices/tweet.slice";
 import {
   setOnlineUsers,
   setSelectedUser,
+  setVisitors,
   updateUser,
 } from "./store/slices/auth.slice";
 import {
@@ -25,6 +26,7 @@ const App = () => {
   const { notfications } = useSelector((state) => state.notfication);
   const { messages } = useSelector((state) => state.conversation);
   const { userConversations } = useSelector((state) => state.conversation);
+  const { visitors } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const notificationsRef = useRef(notfications);
   const userRef = useRef(user);
@@ -32,6 +34,7 @@ const App = () => {
   const selectedUserRef = useRef(selectedUser);
   const messagesRef = useRef(messages);
   const userConversation = useRef(userConversations);
+  const visitorsRef = useRef(visitors);
 
   useResetScrollTopOnLocationChange();
   useFetchNotfications();
@@ -43,7 +46,16 @@ const App = () => {
     selectedUserRef.current = selectedUser;
     messagesRef.current = messages;
     userConversation.current = userConversations;
-  }, [user, notfications, tweets, selectedUser, messages, userConversations]);
+    visitorsRef.current = visitors;
+  }, [
+    user,
+    notfications,
+    tweets,
+    selectedUser,
+    messages,
+    userConversations,
+    visitors,
+  ]);
 
   useEffect(() => {
     if (!user) return;
@@ -192,6 +204,12 @@ const App = () => {
       dispatch(setOnlineUsers(data));
     });
 
+    socket.on("newViewer", (data) => {
+      const viewer = data.viewer.viewerUser;
+      const updatedVisitors = [...visitorsRef.current, viewer];
+      dispatch(setVisitors(updatedVisitors));
+    });
+
     dispatch(setSocket(socket));
 
     return () => {
@@ -204,6 +222,7 @@ const App = () => {
       socket.off("newMessage");
       socket.off("newConversation");
       socket.off("onlineUsers");
+      socket.off("newViewer");
       socket.disconnect();
       dispatch(clearSocket());
     };
