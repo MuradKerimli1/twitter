@@ -16,6 +16,7 @@ const PremiumPackage = () => {
   const [openUpdate, setOpenUpdate] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [packageToUpdate, setPackageToUpdate] = useState(null);
+  const [buyLoading, setBuyLoading] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -50,6 +51,15 @@ const PremiumPackage = () => {
       axiosError(err);
     } finally {
       setLoading(false);
+    }
+  };
+  const handleBuy = async (packageId) => {
+    buyLoading(true);
+    try {
+    } catch (err) {
+      axiosError(err);
+    } finally {
+      buyLoading(false);
     }
   };
 
@@ -167,7 +177,12 @@ const PremiumPackage = () => {
                   )}
 
                   <div className="card-actions justify-end mt-auto">
-                    <button className="btn btn-primary w-full">Satın Al</button>
+                    <button
+                      onClick={() => handleBuy(pkg.id)}
+                      className="btn btn-primary w-full"
+                    >
+                      Satın Al
+                    </button>
                   </div>
                 </div>
               </div>

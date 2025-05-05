@@ -3,6 +3,10 @@ import { appError } from "../../error/appError";
 import { User } from "../../../dal/entity/user.entity";
 import { PremiumPackage } from "../../../dal/entity/premiumPackage.entity";
 import { Currency } from "../../../dal/enums/currencyEnum";
+import { generatePaypalToken } from "../../services/paypal";
+import axios from "axios";
+import { UserPremiumHistory } from "../../../dal/entity/UserPremiumHistory.entity";
+import { PaymentStatus } from "../../../dal/enums/paymentEnum";
 
 const profileViewers = async (
   req: Request,
@@ -39,40 +43,119 @@ const buyPremiumPackage = async (
 ) => {
   try {
     const userId = req.user?.id;
-    const packageId = Number(req.body.packageId);
+    const orderId = req.query.token as string;
+    const packageId = Number(req.query.packageId);
 
     if (!userId) {
-      return next(new appError("User not found", 404));
+      return next(new appError("User authentication required", 401));
     }
 
-    if (!packageId) {
-      return next(new appError("Package ID is required", 400));
+    if (!orderId) {
+      return next(new appError("Order token is required", 400));
     }
 
-    const premiumPackage = await PremiumPackage.findOne({
-      where: { id: packageId },
-    });
-
-    if (!premiumPackage) {
-      return next(new appError("Package not found", 404));
+    if (!packageId || isNaN(packageId)) {
+      return next(new appError("Valid package ID is required", 400));
     }
 
-    const user = await User.findOne({ where: { id: userId } });
+    const [user, pkg] = await Promise.all([
+      User.findOne({ where: { id: userId } }),
+      PremiumPackage.findOne({ where: { id: packageId } }),
+    ]);
+
     if (!user) {
       return next(new appError("User not found", 404));
     }
 
-    // stripe payment logic would go here
-    // For now, we will assume the payment is successful
+    if (!pkg) {
+      return next(new appError("Premium package not found", 404));
+    }
+
+    const accessToken = await generatePaypalToken();
+    if (!accessToken) {
+      return next(
+        new appError("Failed to authenticate with payment provider", 500)
+      );
+    }
+
+    const captureRes = await axios.post(
+      `${process.env.PAYPAL_URL}/v2/checkout/orders/${orderId}/capture`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const payment = captureRes.data;
+    const paymentStatus = payment.status;
+
+    if (paymentStatus !== "COMPLETED") {
+      return next(
+        new appError(`Payment not completed. Status: ${paymentStatus}`, 400)
+      );
+    }
+
+    const amount = payment.purchase_units?.[0]?.amount?.value;
+    const currency = payment.purchase_units?.[0]?.amount?.currency_code;
+    const transactionId =
+      payment.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+
+    if (!amount || !currency || !transactionId) {
+      return next(new appError("Invalid payment details received", 400));
+    }
+
+    const now = new Date();
+    const expiredAt = new Date();
+    expiredAt.setDate(now.getDate() + pkg.durationInDays);
+
+    const history = await UserPremiumHistory.create({
+      user,
+      package: pkg,
+      startedAt: now,
+      expiredAt,
+      paymentStatus: PaymentStatus.COMPLETED,
+      paymentId: orderId,
+      transactionId,
+      amountPaid: amount,
+      currency,
+      paymentDetails: payment,
+    }).save();
+
+    user.isPremium = true;
+    user.premiumExpiredAt = expiredAt;
+    await user.save();
+
+    const approvalUrl = payment.links?.find(
+      (link: any) => link.rel === "approve"
+    )?.href;
 
     res.status(200).json({
       success: true,
-      message: "Premium package purchased successfully",
-      package: premiumPackage,
+      message: "Premium package activated successfully",
+      data: {
+        orderId,
+        transactionId,
+        amountPaid: amount,
+        currency,
+        premiumExpiresAt: expiredAt,
+        approvalUrl,
+      },
     });
   } catch (error) {
-    console.log(error);
-    next(error);
+    console.error("Premium Activation Error:", error);
+
+    if (axios.isAxiosError(error)) {
+      const paypalError = error.response?.data;
+      console.error("PayPal API Error:", paypalError);
+      return next(
+        new appError(paypalError?.message || "Payment processing failed", 500)
+      );
+    }
+
+    next(new appError("Failed to complete premium activation", 500));
   }
 };
 

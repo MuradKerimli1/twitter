@@ -136,4 +136,8 @@ export const summaryApi = {
     url: `/premium/package/update/${id}`,
     method: "put",
   }),
+  buyPackage: {
+    url: `/premium/buy`,
+    method: "post",
+  },
 };

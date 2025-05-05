@@ -5,9 +5,11 @@ import {
   ManyToOne,
   CreateDateColumn,
   BaseEntity,
+  UpdateDateColumn,
 } from "typeorm";
 import { User } from "./user.entity";
 import { PremiumPackage } from "./premiumPackage.entity";
+import { PaymentStatus } from "../enums/paymentEnum";
 
 @Entity()
 export class UserPremiumHistory extends BaseEntity {
@@ -31,6 +33,27 @@ export class UserPremiumHistory extends BaseEntity {
   @Column({ type: "timestamp", nullable: true })
   expiredAt: Date;
 
+  @Column({ type: "enum", enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
+  @Column({ nullable: true })
+  paymentId: string;
+
+  @Column({ nullable: true })
+  transactionId: string;
+
+  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+  amountPaid: number;
+
+  @Column({ nullable: true })
+  currency: string;
+
+  @Column({ type: "json", nullable: true })
+  paymentDetails: any;
+
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
