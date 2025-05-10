@@ -3,11 +3,13 @@ import { appError } from "../../error/appError";
 import { User } from "../../../dal/entity/user.entity";
 import { PremiumPackage } from "../../../dal/entity/premiumPackage.entity";
 import { Currency } from "../../../dal/enums/currencyEnum";
-import { generatePaypalToken } from "../../services/paypal";
-import axios from "axios";
+
 import { PaymentStatus } from "../../../dal/enums/paymentEnum";
 import { UserPremiumHistory } from "../../../dal/entity/UserPremiumHistory.entity";
-import io, { getReceiverSocketId } from "../../../socket/socket";
+
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const profileViewers = async (
   req: Request,
@@ -37,27 +39,39 @@ const profileViewers = async (
   }
 };
 
-const buyPremiumPackage = async (
+const confirmPremiumPackage = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.id;
+    const { session_id } = req.body;
 
-    const packageId = Number(req.query.packageId);
-
-    if (!userId) {
-      return next(new appError("User authentication required", 401));
+    if (!session_id) {
+      return next(new appError("Session ID is required", 400));
     }
 
-    if (!packageId || isNaN(packageId)) {
-      return next(new appError("Valid package ID is required", 400));
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    if (session.payment_status !== "paid") {
+      return next(new appError("Payment not successful", 400));
+    }
+
+    if (!session.metadata) {
+      return next(new appError("Session metadata is missing", 400));
+    }
+
+    const { userId, packageId } = session.metadata;
+
+    if (!userId || !packageId) {
+      return next(
+        new appError("User ID or Package ID is missing in metadata", 400)
+      );
     }
 
     const [user, pkg] = await Promise.all([
-      User.findOne({ where: { id: userId } }),
-      PremiumPackage.findOne({ where: { id: packageId } }),
+      User.findOne({ where: { id: +userId } }),
+      PremiumPackage.findOne({ where: { id: +packageId } }),
     ]);
 
     if (!user) {
@@ -67,24 +81,19 @@ const buyPremiumPackage = async (
     if (!pkg) {
       return next(new appError("Premium package not found", 404));
     }
-    // buying premium package
+
     if (user.isPremium && user.premiumExpiredAt > new Date()) {
       return next(new appError("User is already premium", 400));
     }
 
-    if (pkg.price <= 0) {
-      return next(new appError("Package price must be greater than zero", 400));
-    }
-
     const now = new Date();
     const expiredAt = new Date();
-
     expiredAt.setDate(now.getDate() + pkg.durationInDays);
 
     user.isPremium = true;
     user.premiumExpiredAt = expiredAt;
-
     await user.save();
+
     const history = await UserPremiumHistory.create({
       user,
       package: pkg,
@@ -92,10 +101,13 @@ const buyPremiumPackage = async (
       expiredAt,
       paymentStatus: PaymentStatus.COMPLETED,
       currency: pkg.currency,
+      stripeSessionId: session_id,
     }).save();
+
     if (!history) {
       return next(new appError("Failed to create premium history", 500));
     }
+
     res.status(200).json({
       success: true,
       message: "Premium package activated successfully",
@@ -108,7 +120,11 @@ const buyPremiumPackage = async (
   }
 };
 
-const createOrder = async (req: Request, res: Response, next: NextFunction) => {
+export const createOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const userId = req.user?.id;
     const { packageId } = req.body;
@@ -130,49 +146,38 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
       return next(new appError("Package price must be greater than zero", 400));
     }
 
-    const accessToken = await generatePaypalToken();
-
-    const requestPayload = {
-      intent: "CAPTURE",
-      purchase_units: [
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
         {
-          amount: {
-            currency_code: pkg.currency,
-            value: pkg.price.toFixed(2),
+          price_data: {
+            currency: pkg.currency.toLowerCase(),
+            product_data: {
+              name: pkg.name,
+              ...(pkg.description ? { description: pkg.description } : {}),
+            },
+            unit_amount: pkg.price * 100,
           },
+          quantity: 1,
         },
       ],
-      application_context: {
-        return_url: `${process.env.FRONT_END_URL}/premium/checkout-success?packageId=${pkg.id}`,
-        cancel_url: `${process.env.FRONT_END_URL}/premium/cancel`,
+      metadata: {
+        userId: userId.toString(),
+        packageId: pkg.id.toString(),
       },
-    };
-
-    const orderRes = await axios.post(
-      `${process.env.PAYPAL_URL}/v2/checkout/orders`,
-      requestPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const order = orderRes.data;
-    const approvalUrl = order.links.find((l: any) => l.rel === "approve")?.href;
+      success_url: `${process.env.FRONT_END_URL}/checkout/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONT_END_URL}/checkout/cancel`,
+    });
 
     res.status(201).json({
       success: true,
-      orderId: order.id,
-      approvalUrl,
+      sessionId: session.id,
+      url: session.url,
     });
-  } catch (error: any) {
-    console.error("Create Order Error:", error);
-    if (error.response) {
-      console.error("PayPal API Response:", error.response.data);
-    }
-    next(new appError("Failed to create PayPal order", 500));
+  } catch (error) {
+    console.error("Stripe order create error:", error);
+    next(new appError("Failed to create Stripe order", 500));
   }
 };
 
@@ -316,7 +321,7 @@ const updatePremiumPackage = async (
 export const premiumController = () => {
   return {
     profileViewers,
-    buyPremiumPackage,
+    confirmPremiumPackage,
     getPremiumPackages,
     createPremiumPackage,
     deletePremiumPackage,
@@ -324,83 +329,3 @@ export const premiumController = () => {
     createOrder,
   };
 };
-
-// const accessToken = await generatePaypalToken();
-// if (!accessToken) {
-//   return next(
-//     new appError("Failed to authenticate with payment provider", 500)
-//   );
-// }
-
-// const captureRes = await axios.post(
-//   `${process.env.PAYPAL_URL}/v2/checkout/orders/${orderId}/capture`,
-//   {},
-//   {
-//     headers: {
-//       Authorization: `Bearer ${accessToken}`,
-//       "Content-Type": "application/json",
-//     },
-//   }
-// );
-
-// const payment = captureRes.data;
-// const paymentStatus = payment.status;
-
-// if (paymentStatus !== "COMPLETED") {
-//   return next(
-//     new appError(`Payment not completed. Status: ${paymentStatus}`, 400)
-//   );
-// }
-
-// const amount = payment.purchase_units?.[0]?.amount?.value;
-// const currency = payment.purchase_units?.[0]?.amount?.currency_code;
-// const transactionId =
-//   payment.purchase_units?.[0]?.payments?.captures?.[0]?.id;
-
-// if (!amount || !currency || !transactionId) {
-//   return next(new appError("Invalid payment details received", 400));
-// }
-
-// const now = new Date();
-// const expiredAt = new Date();
-// expiredAt.setDate(now.getDate() + pkg.durationInDays);
-
-// const history = await UserPremiumHistory.create({
-//   user,
-//   package: pkg,
-//   startedAt: now,
-//   expiredAt,
-//   paymentStatus: PaymentStatus.COMPLETED,
-//   paymentId: orderId,
-//   transactionId,
-//   amountPaid: amount,
-//   currency,
-//   paymentDetails: payment,
-// }).save();
-
-// user.isPremium = true;
-// user.premiumExpiredAt = expiredAt;
-// await user.save();
-
-// const approvalUrl = payment.links?.find(
-//   (link: any) => link.rel === "approve"
-// )?.href;
-
-// res.status(200).json({
-//   success: true,
-//   message: "Premium package activated successfully",
-//   data: {
-//     orderId,
-//     transactionId,
-//     amountPaid: amount,
-//     currency,
-//     premiumExpiresAt: expiredAt,
-//     approvalUrl,
-//   },
-// });
-
-// if (!orderId) {
-//   return next(new appError("Order token is required", 400));
-// }
-
-// const orderId = req.query.token as string;

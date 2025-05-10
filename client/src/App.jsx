@@ -218,6 +218,7 @@ const App = () => {
 
     socket.on("premiumStatusExpired", (data) => {
       const { userId } = data;
+
       if (userRef.current?.id == userId) {
         dispatch(
           setUser({
@@ -243,6 +244,7 @@ const App = () => {
       socket.off("newConversation");
       socket.off("onlineUsers");
       socket.off("newViewer");
+      socket.off("viewersCleanedUp");
       socket.off("premiumStatusExpired");
       socket.disconnect();
       dispatch(clearSocket());

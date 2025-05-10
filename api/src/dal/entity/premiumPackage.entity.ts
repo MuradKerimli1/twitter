@@ -33,6 +33,8 @@ export class PremiumPackage extends BaseEntity {
   @Column({ type: "text", nullable: true })
   description: string;
 
+ 
+
   @OneToMany(() => UserPremiumHistory, (uph) => uph.package)
   userPremiumHistories: UserPremiumHistory[];
 

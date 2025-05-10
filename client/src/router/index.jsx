@@ -16,6 +16,8 @@ import Messages from "../page/Messages";
 import Premium from "../page/Premium";
 import PremiumLayout from "../layout/PremiumLayout";
 import Visitors from "../page/Visitors";
+import CheckoutCancel from "../page/CheckoutCancel";
+import CheckoutSuccess from "../page/CheckoutSuccess";
 
 export const router = createBrowserRouter([
   {
@@ -63,6 +65,14 @@ export const router = createBrowserRouter([
                 element: <Visitors />,
               },
             ],
+          },
+          {
+            path: "checkout/checkout-success",
+            element: <CheckoutSuccess />,
+          },
+          {
+            path: "checkout/cancel",
+            element: <CheckoutCancel />,
           },
         ],
       },

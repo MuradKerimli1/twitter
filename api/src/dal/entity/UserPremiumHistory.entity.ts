@@ -37,6 +37,9 @@ export class UserPremiumHistory extends BaseEntity {
   paymentStatus: PaymentStatus;
 
   @Column({ nullable: true })
+  stripeSessionId: string;
+
+  @Column({ nullable: true })
   currency: string;
 
   @CreateDateColumn()
@@ -45,14 +48,3 @@ export class UserPremiumHistory extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
-// @Column({ nullable: true })
-// paymentId: string;
-
-// @Column({ nullable: true })
-// transactionId: string;
-
-// @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-// amountPaid: number;
-// @Column({ type: "json", nullable: true })
-// paymentDetails: any;

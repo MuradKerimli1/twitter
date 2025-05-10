@@ -144,4 +144,8 @@ export const summaryApi = {
     url: `/premium/buy`,
     method: "post",
   },
+  packetOrder: {
+    url: `/premium/create-order`,
+    method: "post",
+  },
 };

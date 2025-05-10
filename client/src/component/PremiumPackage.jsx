@@ -4,7 +4,15 @@ import { Axios } from "../lib/axios";
 import { summaryApi } from "../config/summaryApi";
 import { setPackages, setUser } from "../store/slices/auth.slice";
 import { axiosError } from "../error/axiosError";
-import { FaCrown, FaCheck, FaClock, FaEllipsisV } from "react-icons/fa";
+import {
+  FaCrown,
+  FaCheck,
+  FaClock,
+  FaEllipsisV,
+  FaStar,
+  FaGem,
+  FaRocket,
+} from "react-icons/fa";
 import CreatePackage from "./CreatePackage";
 import UpdatePackage from "./UpdatePackage";
 
@@ -58,17 +66,14 @@ const PremiumPackage = () => {
     setBuyLoading(packageId);
     try {
       const res = await Axios({
-        ...summaryApi.buyPremiumPacket,
-        params: { packageId },
+        ...summaryApi.packetOrder,
+        data: { packageId },
       });
-      if (res.data.success) {
-        dispatch(
-          setUser({
-            ...user,
-            isPremium: true,
-            premiumExpiredAt: res.data.premiumExpiresAt,
-          })
-        );
+
+      const { url } = res.data;
+
+      if (url) {
+        window.location.href = url;
       }
     } catch (err) {
       axiosError(err);
@@ -114,15 +119,38 @@ const PremiumPackage = () => {
             {packages.map((pkg) => (
               <div
                 key={pkg.id}
-                className="card bg-[#202327] cursor-pointer font-semibold shadow-md hover:border-primary hover:shadow-lg transition-all duration-300 min-h-[400px] flex flex-col relative"
+                className={`relative rounded-xl overflow-hidden shadow-lg transition-all duration-300 transform hover:scale-[1.02] ${
+                  pkg.name.toLowerCase().includes("premium")
+                    ? "border-2 border-yellow-400"
+                    : "border border-gray-700"
+                }`}
               >
-                <div className="card-body flex flex-col flex-grow">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <FaCrown className="text-2xl text-yellow-500 mr-2" />
-                      <h3 className="card-title text-xl font-bold">
-                        {pkg.name}
-                      </h3>
+                {pkg.name.toLowerCase().includes("premium") && (
+                  <div className="absolute top-0 right-0 bg-yellow-400 text-gray-900 px-3 py-1 text-xs font-bold rounded-bl-lg z-10">
+                    POPÜLER
+                  </div>
+                )}
+
+                <div className="bg-gray-800 p-6 h-full flex flex-col">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="flex items-center mb-2">
+                        {pkg.name.toLowerCase().includes("basic") && (
+                          <FaStar className="text-blue-400 mr-2 text-xl" />
+                        )}
+                        {pkg.name.toLowerCase().includes("premium") && (
+                          <FaGem className="text-yellow-400 mr-2 text-xl" />
+                        )}
+                        {pkg.name.toLowerCase().includes("pro") && (
+                          <FaRocket className="text-purple-400 mr-2 text-xl" />
+                        )}
+                        <h3 className="text-xl font-bold text-white">
+                          {pkg.name}
+                        </h3>
+                      </div>
+                      <p className="text-gray-400 text-sm">
+                        {pkg.description || "Özel avantajlar paketi"}
+                      </p>
                     </div>
 
                     {user.role === "ADMIN" && (
@@ -139,25 +167,25 @@ const PremiumPackage = () => {
                         </button>
 
                         {menuOpenId === pkg.id && (
-                          <div className="absolute right-0 top-8 bg-[#2F3336] border border-[#3C4043] rounded-lg z-50 w-32 shadow-lg">
+                          <div className="absolute right-0 top-8 bg-gray-700 border border-gray-600 rounded-lg z-50 w-32 shadow-lg">
                             <button
                               onClick={() => {
                                 setMenuOpenId(null);
                                 setPackageToUpdate(pkg);
                                 setOpenUpdate((prev) => !prev);
                               }}
-                              className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-[#3A3F44]"
+                              className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-gray-600"
                             >
-                              Update
+                              Düzenle
                             </button>
                             <button
                               onClick={() => {
                                 setMenuOpenId(null);
                                 handleDeletePackage(pkg.id);
                               }}
-                              className="block w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-[#3A3F44]"
+                              className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-600"
                             >
-                              Delete
+                              Sil
                             </button>
                           </div>
                         )}
@@ -165,48 +193,52 @@ const PremiumPackage = () => {
                     )}
                   </div>
 
-                  <div className="mb-4">
-                    <span className="text-3xl font-bold text-primary">
+                  <div className="my-6">
+                    <span className="text-4xl font-bold text-white">
                       {pkg.price} {pkg.currency}
+                    </span>
+                    <span className="text-gray-400">
+                      {" "}
+                      / {pkg.durationInDays} gün
                     </span>
                   </div>
 
-                  <div className="space-y-3 mb-6 flex-grow">
-                    <div className="flex items-center">
-                      <FaClock className="text-gray-500 mr-2" />
-                      <span>{pkg.durationInDays} gün geçerli</span>
-                    </div>
-                    {pkg.features?.map((feature, index) => (
-                      <div key={index} className="flex items-center">
-                        <FaCheck className="text-green-500 mr-2" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
+                  <div className="mb-8 flex-grow">
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <FaCheck className="text-green-400 mr-2 mt-1 flex-shrink-0" />
+                        <span className="text-gray-300">
+                          {pkg.durationInDays} gün geçerli
+                        </span>
+                      </li>
+                      {pkg.features?.map((feature, index) => (
+                        <li key={index} className="flex items-start">
+                          <FaCheck className="text-green-400 mr-2 mt-1 flex-shrink-0" />
+                          <span className="text-gray-300">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {pkg.description && (
-                    <div className="text-sm text-gray-500 mb-6">
-                      {pkg.description}
-                    </div>
-                  )}
-
-                  <div className="card-actions justify-end mt-auto">
-                    <button
-                      onClick={() => handleBuy(pkg.id)}
-                      className={`btn btn-primary w-full flex items-center justify-center ${
-                        buyLoading === pkg.id
-                          ? "opacity-70 cursor-not-allowed"
-                          : ""
-                      }`}
-                      disabled={buyLoading === pkg.id}
-                    >
-                      {buyLoading === pkg.id ? (
-                        <span className="loading loading-spinner loading-sm text-white"></span>
-                      ) : (
-                        "Satın Al"
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleBuy(pkg.id)}
+                    className={`w-full py-3 px-6 rounded-lg font-bold text-center transition-all ${
+                      pkg.name.toLowerCase().includes("premium")
+                        ? "bg-yellow-400 hover:bg-yellow-500 text-gray-900"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    } ${
+                      buyLoading === pkg.id
+                        ? "opacity-70 cursor-not-allowed"
+                        : ""
+                    }`}
+                    disabled={buyLoading === pkg.id}
+                  >
+                    {buyLoading === pkg.id ? (
+                      <span className="loading loading-spinner loading-sm"></span>
+                    ) : (
+                      "Hemen Satın Al"
+                    )}
+                  </button>
                 </div>
               </div>
             ))}

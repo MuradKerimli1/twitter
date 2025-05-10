@@ -47,9 +47,13 @@ export const startPremiumStatusCheckerJob = () => {
           io.to(socketId).emit("premiumStatusExpired", {
             message: "Sizin premium statusunuz sona çatıb.",
             isPremium: false,
+            userId: user.id,
           });
         }
       }
+      console.log(
+        `Premium statusu bitmiş ${expiredPremiumUsers.length} istifadəçi tapıldı.`
+      );
     } catch (err) {
       console.error("❌ Premium status check zamanı xəta baş verdi:", err);
     }

@@ -12,7 +12,7 @@ premiumRouter.get(
   premiumMiddleware,
   controller.profileViewers
 );
-premiumRouter.post("/buy", auth, controller.buyPremiumPackage);
+premiumRouter.post("/buy", auth, controller.confirmPremiumPackage);
 premiumRouter.get("/packages", auth, controller.getPremiumPackages);
 premiumRouter.post("/create", auth, controller.createPremiumPackage);
 premiumRouter.delete(
