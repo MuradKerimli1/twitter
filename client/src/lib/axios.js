@@ -27,11 +27,11 @@ Axios.interceptors.response.use(
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}/auth/setAccessToken`,
-          {},
           { withCredentials: true }
         );
 
         const newAccessToken = response.data.token;
+
         localStorage.setItem("token", newAccessToken);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

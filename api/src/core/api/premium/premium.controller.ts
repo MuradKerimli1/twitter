@@ -7,6 +7,7 @@ import { generatePaypalToken } from "../../services/paypal";
 import axios from "axios";
 import { PaymentStatus } from "../../../dal/enums/paymentEnum";
 import { UserPremiumHistory } from "../../../dal/entity/UserPremiumHistory.entity";
+import io, { getReceiverSocketId } from "../../../socket/socket";
 
 const profileViewers = async (
   req: Request,
@@ -236,6 +237,7 @@ const createPremiumPackage = async (
     if (!newPackage) {
       return next(new appError("Failed to create package", 500));
     }
+
     res.status(201).json({
       success: true,
       message: "Package created successfully",

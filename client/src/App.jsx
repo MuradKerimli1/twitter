@@ -10,6 +10,7 @@ import { setNotfication } from "./store/slices/notfication.slice";
 import useFetchNotfications from "./hooks/fetchNotfication";
 import { setTweet, updateSelectedTweet } from "./store/slices/tweet.slice";
 import {
+  clearVisitors,
   setOnlineUsers,
   setSelectedUser,
   setUser,
@@ -211,12 +212,13 @@ const App = () => {
       dispatch(setVisitors(updatedVisitors));
     });
 
-    socket.on("premiumStatusExpired", (data) => {
-      console.log(userRef.current);
+    socket.on("viewersCleanedUp", () => {
+      dispatch(clearVisitors());
+    });
 
+    socket.on("premiumStatusExpired", (data) => {
       const { userId } = data;
       if (userRef.current?.id == userId) {
-        console.log("salamlar");
         dispatch(
           setUser({
             ...userRef.current,

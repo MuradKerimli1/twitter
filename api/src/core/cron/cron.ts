@@ -15,7 +15,10 @@ export const startViewerCleanupJob = () => {
         }
       }
 
-      console.log("Bütün user-lər üçün viewers sıfırlandı.");
+      io.emit("viewersCleanedUp", {
+        message: "Bütün istifadəçilərin viewer-ləri silindi.",
+      });
+      console.log("Bütün istifadəçilərin viewer-ləri silindi.");
     } catch (err) {
       console.error("Viewer cleanup zamanı xəta baş verdi:", err);
     }
@@ -47,10 +50,6 @@ export const startPremiumStatusCheckerJob = () => {
           });
         }
       }
-
-      console.log(
-        `✅ ${expiredPremiumUsers.length} istifadəçinin premium statusu sıfırlandı.`
-      );
     } catch (err) {
       console.error("❌ Premium status check zamanı xəta baş verdi:", err);
     }

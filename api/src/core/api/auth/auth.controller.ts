@@ -105,7 +105,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       sub: existUser.id,
     };
     const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET_KEY!, {
-      expiresIn: "7d",
+      expiresIn: "15m",
     });
     const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_KEY!, {
       expiresIn: "7d",
@@ -155,7 +155,6 @@ const refreshTokenController = async (
     const payload = {
       sub: verifyRefreshToken.sub,
     };
-    console.log(payload);
 
     const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET_KEY!, {
       expiresIn: "1h",

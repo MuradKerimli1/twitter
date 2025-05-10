@@ -41,7 +41,7 @@ const SuggesstedUsers = () => {
       )}
       {!loading && suggestedUsers.length == 0 && (
         <div>
-          <p className=" font-bold">You follow anyone? 😆</p>
+          <p className=" font-bold">Hiçbir öneri yok</p>
         </div>
       )}
       {!loading && suggestedUsers.length > 0 && (

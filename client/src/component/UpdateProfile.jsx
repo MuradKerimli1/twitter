@@ -13,23 +13,25 @@ const UpdateProfile = ({ close }) => {
   const navigate = useNavigate();
   const { selectedUser } = useSelector((state) => state.auth);
   const isScrolled = useScroll(20);
+  const ref = useRef();
+  const dispatch = useDispatch();
+
   const [userData, setUserData] = useState({
-    imageUrl: selectedUser?.profil_picture,
-    email: selectedUser?.email,
-    username: selectedUser?.username,
-    bio: selectedUser?.bio,
+    imageFile: null,
+    previewUrl: selectedUser?.profil_picture || "",
+    email: selectedUser?.email || "",
+    username: selectedUser?.username || "",
+    bio: selectedUser?.bio || "",
   });
 
   const [loading, setLoading] = useState(false);
-  const ref = useRef();
-  const dispatch = useDispatch();
 
   const handleChangeImage = (e) => {
     const file = e.target.files[0];
     if (file) {
       setUserData((prev) => ({
         ...prev,
-        imageUrl: file,
+        imageFile: file,
         previewUrl: URL.createObjectURL(file),
       }));
     }
@@ -45,8 +47,8 @@ const UpdateProfile = ({ close }) => {
     const formData = new FormData();
     let change = false;
 
-    if (userData.imageUrl !== selectedUser?.profil_picture) {
-      formData.append("imageUrl", userData.imageUrl);
+    if (userData.imageFile) {
+      formData.append("imageUrl", userData.imageFile);
       change = true;
     }
     if (userData.email !== selectedUser?.email) {
@@ -82,12 +84,6 @@ const UpdateProfile = ({ close }) => {
     }
   };
 
-  const imagePreview = userData.previewUrl
-    ? userData.previewUrl
-    : typeof userData.imageUrl === "string"
-    ? userData.imageUrl
-    : "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D";
-
   return (
     <section
       style={{ backgroundColor: "rgba(36, 45, 52, 0.8)" }}
@@ -111,7 +107,10 @@ const UpdateProfile = ({ close }) => {
             onClick={() => ref.current.click()}
           >
             <img
-              src={imagePreview}
+              src={
+                userData.previewUrl ||
+                "https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?fm=jpg&q=60&w=3000"
+              }
               alt="Profile"
               className="w-full h-full object-cover object-center"
             />
@@ -171,7 +170,11 @@ const UpdateProfile = ({ close }) => {
             ></textarea>
           </div>
 
-          <button type="submit" className="btn w-full">
+          <button
+            type="submit"
+            className="btn w-full disabled:opacity-50"
+            disabled={loading}
+          >
             {loading ? "...yükleniyor" : "Kaydet"}
           </button>
         </form>
