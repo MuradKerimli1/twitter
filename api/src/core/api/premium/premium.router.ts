@@ -27,3 +27,4 @@ premiumRouter.put(
   adminMiddleware,
   controller.updatePremiumPackage
 );
+premiumRouter.post("/create-order", auth, controller.createOrder);

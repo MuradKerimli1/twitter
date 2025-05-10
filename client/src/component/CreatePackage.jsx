@@ -16,9 +16,9 @@ const CreatePackage = ({ close }) => {
     name: "",
     price: 0,
     description: "",
-    durationInDays: 30,
+    durationInDays: 0,
     features: [],
-    currency: "AZN",
+    currency: "USD",
   });
   const dispatch = useDispatch();
 
@@ -161,7 +161,6 @@ const CreatePackage = ({ close }) => {
               className="w-full px-4 py-2 bg-[#253341] border border-[#38444D] rounded-lg"
               required
             >
-              <option value="AZN">AZN</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </select>

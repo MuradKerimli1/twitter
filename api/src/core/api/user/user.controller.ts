@@ -30,7 +30,7 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
       return next(new appError("User not found", 404));
     }
 
-    if (loggedInUserId && loggedInUserId !== id) {
+    if (loggedInUserId && loggedInUserId !== id && user.isPremium) {
       const viewerUser = await User.findOne({ where: { id: loggedInUserId } });
 
       if (
@@ -49,21 +49,18 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
           });
         }
 
-        if (user.isPremium) {
-          const notification = Notification.create({
-            fromUser: viewerUser,
-            toUser: user,
-            title: "New Profile View",
-            message: `${viewerUser.username} viewed your profile.`,
-            type: NotificationType.profileView,
-          });
+        const notification = Notification.create({
+          fromUser: viewerUser,
+          toUser: user,
+          title: "New Profile View",
+          message: `${viewerUser.username} viewed your profile.`,
+          type: NotificationType.profileView,
+        });
 
-          await notification.save();
+        await notification.save();
 
-          const receiverId = getReceiverSocketId(user.id);
-          if (receiverId) {
-            io.to(receiverId).emit("newNotification", { notification });
-          }
+        if (receiverId) {
+          io.to(receiverId).emit("newNotification", { notification });
         }
       }
     }

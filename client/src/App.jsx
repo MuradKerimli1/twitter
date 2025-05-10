@@ -12,6 +12,7 @@ import { setTweet, updateSelectedTweet } from "./store/slices/tweet.slice";
 import {
   setOnlineUsers,
   setSelectedUser,
+  setUser,
   setVisitors,
   updateUser,
 } from "./store/slices/auth.slice";
@@ -210,6 +211,23 @@ const App = () => {
       dispatch(setVisitors(updatedVisitors));
     });
 
+    socket.on("premiumStatusExpired", (data) => {
+      console.log(userRef.current);
+
+      const { userId } = data;
+      if (userRef.current?.id == userId) {
+        console.log("salamlar");
+        dispatch(
+          setUser({
+            ...userRef.current,
+            isPremium: false,
+            premiumExpiredAt: null,
+            viewers: [],
+          })
+        );
+      }
+    });
+
     dispatch(setSocket(socket));
 
     return () => {
@@ -223,6 +241,7 @@ const App = () => {
       socket.off("newConversation");
       socket.off("onlineUsers");
       socket.off("newViewer");
+      socket.off("premiumStatusExpired");
       socket.disconnect();
       dispatch(clearSocket());
     };

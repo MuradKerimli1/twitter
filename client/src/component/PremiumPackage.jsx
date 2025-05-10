@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Axios } from "../lib/axios";
 import { summaryApi } from "../config/summaryApi";
-import { setPackages } from "../store/slices/auth.slice";
+import { setPackages, setUser } from "../store/slices/auth.slice";
 import { axiosError } from "../error/axiosError";
 import { FaCrown, FaCheck, FaClock, FaEllipsisV } from "react-icons/fa";
 import CreatePackage from "./CreatePackage";
@@ -16,7 +16,7 @@ const PremiumPackage = () => {
   const [openUpdate, setOpenUpdate] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [packageToUpdate, setPackageToUpdate] = useState(null);
-  const [buyLoading, setBuyLoading] = useState(false);
+  const [buyLoading, setBuyLoading] = useState(null);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -53,13 +53,27 @@ const PremiumPackage = () => {
       setLoading(false);
     }
   };
+
   const handleBuy = async (packageId) => {
-    buyLoading(true);
+    setBuyLoading(packageId);
     try {
+      const res = await Axios({
+        ...summaryApi.buyPremiumPacket,
+        params: { packageId },
+      });
+      if (res.data.success) {
+        dispatch(
+          setUser({
+            ...user,
+            isPremium: true,
+            premiumExpiredAt: res.data.premiumExpiresAt,
+          })
+        );
+      }
     } catch (err) {
       axiosError(err);
     } finally {
-      buyLoading(false);
+      setBuyLoading(null);
     }
   };
 
@@ -77,7 +91,7 @@ const PremiumPackage = () => {
         </div>
       )}
 
-      {!loading && packages.length === 0 && (
+      {!loading && packages?.length === 0 && (
         <div className="text-center my-8">
           <FaCrown className="mx-auto text-4xl text-gray-400 mb-4" />
           <h3 className="text-xl font-bold text-gray-500">Henüz paket yok</h3>
@@ -87,7 +101,7 @@ const PremiumPackage = () => {
         </div>
       )}
 
-      {!loading && packages.length > 0 && (
+      {!loading && packages?.length > 0 && (
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-2">Premium Paketler</h2>
@@ -112,27 +126,27 @@ const PremiumPackage = () => {
                     </div>
 
                     {user.role === "ADMIN" && (
-                      <div className="relative ">
+                      <div className="relative">
                         <button
                           onClick={() =>
                             setMenuOpenId((prev) =>
                               prev === pkg.id ? null : pkg.id
                             )
                           }
-                          className="text-gray-400 hover:text-white  cursor-pointer"
+                          className="text-gray-400 hover:text-white cursor-pointer"
                         >
                           <FaEllipsisV />
                         </button>
 
                         {menuOpenId === pkg.id && (
-                          <div className="absolute cursor-pointer right-0 top-8 bg-[#2F3336] border border-[#3C4043] rounded-lg z-50 w-32 shadow-lg">
+                          <div className="absolute right-0 top-8 bg-[#2F3336] border border-[#3C4043] rounded-lg z-50 w-32 shadow-lg">
                             <button
                               onClick={() => {
                                 setMenuOpenId(null);
                                 setPackageToUpdate(pkg);
                                 setOpenUpdate((prev) => !prev);
                               }}
-                              className="block cursor-pointer w-full px-4 py-2 text-left text-sm text-white hover:bg-[#3A3F44]"
+                              className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-[#3A3F44]"
                             >
                               Update
                             </button>
@@ -141,7 +155,7 @@ const PremiumPackage = () => {
                                 setMenuOpenId(null);
                                 handleDeletePackage(pkg.id);
                               }}
-                              className="block cursor-pointer w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-[#3A3F44]"
+                              className="block w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-[#3A3F44]"
                             >
                               Delete
                             </button>
@@ -179,9 +193,18 @@ const PremiumPackage = () => {
                   <div className="card-actions justify-end mt-auto">
                     <button
                       onClick={() => handleBuy(pkg.id)}
-                      className="btn btn-primary w-full"
+                      className={`btn btn-primary w-full flex items-center justify-center ${
+                        buyLoading === pkg.id
+                          ? "opacity-70 cursor-not-allowed"
+                          : ""
+                      }`}
+                      disabled={buyLoading === pkg.id}
                     >
-                      Satın Al
+                      {buyLoading === pkg.id ? (
+                        <span className="loading loading-spinner loading-sm text-white"></span>
+                      ) : (
+                        "Satın Al"
+                      )}
                     </button>
                   </div>
                 </div>

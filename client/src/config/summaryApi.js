@@ -140,4 +140,8 @@ export const summaryApi = {
     url: `/premium/buy`,
     method: "post",
   },
+  buyPremiumPacket: {
+    url: `/premium/buy`,
+    method: "post",
+  },
 };

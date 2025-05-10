@@ -24,10 +24,10 @@ export class PremiumPackage extends BaseEntity {
   @Column("simple-array")
   features: string[];
 
-  @Column({ type: "decimal", precision: 10, scale: 2 })
+  @Column()
   price: number;
 
-  @Column({ type: "enum", enum: Currency, default: Currency.AZN })
+  @Column({ type: "enum", enum: Currency, default: Currency.EUR })
   currency: Currency;
 
   @Column({ type: "text", nullable: true })
