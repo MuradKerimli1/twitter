@@ -51,9 +51,6 @@ export const startPremiumStatusCheckerJob = () => {
           });
         }
       }
-      console.log(
-        `Premium statusu bitmiş ${expiredPremiumUsers.length} istifadəçi tapıldı.`
-      );
     } catch (err) {
       console.error("❌ Premium status check zamanı xəta baş verdi:", err);
     }
