@@ -16,4 +16,32 @@ Axios.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// axios response interseptor for refresh token
+Axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/auth/setAccessToken`,
+          {},
+          { withCredentials: true }
+        );
+
+        const newAccessToken = response.data.token;
+        localStorage.setItem("token", newAccessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return Axios(originalRequest);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
