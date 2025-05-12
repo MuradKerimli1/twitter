@@ -1,5 +1,6 @@
 import axios from "axios";
 
+
 export const Axios = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   withCredentials: true,
@@ -40,6 +41,13 @@ Axios.interceptors.response.use(
       } catch (refreshError) {
         return Promise.reject(refreshError);
       }
+    }
+
+    if (error.response?.status === 403) {
+      localStorage.clear();
+      setTimeout(() => {
+        window.location.href = "/auth/login";
+      }, 2000);
     }
 
     return Promise.reject(error);

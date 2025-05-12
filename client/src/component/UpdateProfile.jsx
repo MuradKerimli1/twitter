@@ -22,6 +22,7 @@ const UpdateProfile = ({ close }) => {
     email: selectedUser?.email || "",
     username: selectedUser?.username || "",
     bio: selectedUser?.bio || "",
+    isvisible: selectedUser?.isvisible || false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +62,11 @@ const UpdateProfile = ({ close }) => {
     }
     if (userData.bio !== selectedUser?.bio) {
       formData.append("bio", userData.bio);
+      change = true;
+    }
+
+    if (userData.isvisible !== selectedUser?.isvisible) {
+      formData.append("isvisible", userData.isvisible);
       change = true;
     }
 
@@ -168,6 +174,23 @@ const UpdateProfile = ({ close }) => {
               value={userData.bio}
               maxLength={160}
             ></textarea>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isvisible"
+              name="isvisible"
+              checked={userData.isvisible}
+              onChange={(e) =>
+                setUserData((prev) => ({
+                  ...prev,
+                  isvisible: e.target.checked,
+                }))
+              }
+            />
+            <label htmlFor="isvisible" className="text-sm">
+              Profilimi gizli yap
+            </label>
           </div>
 
           <button

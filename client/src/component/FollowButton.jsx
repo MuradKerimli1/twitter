@@ -7,11 +7,16 @@ import { useSelector } from "react-redux";
 const FollowButton = ({ id }) => {
   const { user } = useSelector((state) => state.auth);
 
-  const isFollow = user?.following?.some((f) => f.id == id);
+  const isFollowing = user?.following?.some?.((f) => f.id == id) || false;
 
   const handleFollow = async (e) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    if (e?.preventDefault) e.preventDefault();
+    e?.stopPropagation?.();
+    e?.preventDefault?.();
+
+    if (!user) {
+      toast.error("Lütfen giriş yapın");
+      return;
+    }
 
     try {
       const res = await Axios({ ...summaryApi.followUser(id) });
@@ -23,17 +28,21 @@ const FollowButton = ({ id }) => {
     }
   };
 
+  
+  if (user?.id == id) return null;
+
   return (
     <button
       type="button"
       onClick={handleFollow}
-      className={`px-3 py-2 cursor-pointer font-bold text-sm rounded-full border border-[#5F6468] block ml-auto shadow-none transition-all duration-200 ${
-        isFollow
+      disabled={!user}
+      className={`px-3 py-2 cursor-pointer font-bold text-sm rounded-full transition-all duration-200 ${
+        isFollowing
           ? "bg-black text-white border border-[#44525C] hover:text-red-500"
-          : "bg-[#D7DBDC] text-black hover:bg-[#D7DBDC] border-none"
-      }`}
+          : "bg-[#D7DBDC] text-black hover:bg-gray-300 border-none"
+      } ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
     >
-      {isFollow ? "Takibi Bırak" : "Takip Et"}
+      {isFollowing ? "Takibi Bırak" : "Takip Et"}
     </button>
   );
 };

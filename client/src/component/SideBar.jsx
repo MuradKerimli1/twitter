@@ -97,7 +97,7 @@ const SideBar = () => {
   };
   return (
     <>
-      <div className=" fixed top-0 left-0 z-10 w-20  sm:w-52 shadow-md h-screen p-3 flex flex-col gap-4  ">
+      <div className=" fixed top-0 left-0 z-10 w-15  sm:w-45 shadow-md h-screen p-3 flex flex-col gap-4  ">
         {/* icon */}
         <Link to={"/"} className="p-2 cursor-pointer">
           <BsTwitterX size={30} />

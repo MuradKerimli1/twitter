@@ -30,6 +30,9 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     if (!existUser) {
       return next(new appError("User not found", 404));
     }
+    if (existUser.isBlocked) {
+      return next(new appError("Your account is blocked", 403));
+    }
 
     req.user = existUser;
 

@@ -59,6 +59,9 @@ export class User extends BaseEntity {
   @Column({ default: false })
   isBlocked: boolean;
 
+  @Column({ default: true })
+  isvisible: boolean;
+
   @Column({ default: false })
   isPremium: boolean;
 

@@ -13,6 +13,7 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = Number(req.params.id);
     const loggedInUserId = req.user?.id;
+    let visible = true;
 
     if (!id) {
       return next(new appError("User ID is required", 400));
@@ -64,11 +65,20 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
         }
       }
     }
+    const notFollower = !user.following.some((f) => f.id === loggedInUserId);
+
+    if (!user.isvisible && loggedInUserId !== id && notFollower) {
+      user.tweets = [];
+      visible = false;
+    }
+
+    const { password, ...safeUser } = user;
 
     res.status(200).json({
       message: "User profile retrieved successfully",
       success: true,
-      data: user,
+      data: safeUser,
+      isvisible: visible,
     });
   } catch (error) {
     console.log(error);
@@ -263,8 +273,15 @@ const searchUser = async (req: Request, res: Response, next: NextFunction) => {
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.user;
-    const { email, username, gender, currentPassword, newPassword, bio } =
-      req.body;
+    const {
+      email,
+      username,
+      gender,
+      currentPassword,
+      newPassword,
+      bio,
+      isvisible,
+    } = req.body;
 
     const files = req.files as any;
     const imageUrl = files?.imageUrl?.[0]?.path || "";
@@ -314,6 +331,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
       gender: gender || existUser.gender,
       profil_picture: imageUrl || existUser.profil_picture,
       cover_picture: coverUrl || existUser.cover_picture,
+      isvisible: isvisible || existUser.isvisible,
     });
 
     await existUser.save();

@@ -23,14 +23,17 @@ const Profile = () => {
   const [tweetLoading, setTweetLoading] = useState(false);
   const { userTweets } = useSelector((state) => state.tweet);
   const [openUpdate, setOpenUpdate] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       setLoading(true);
       try {
         const res = await Axios({ ...summaryApi.getUserById(id) });
+
         if (res.data.success) {
           dispatch(setSelectedUser(res.data.data));
+          setIsVisible(res.data.isvisible);
         }
       } catch (error) {
         axiosError(error);
@@ -46,6 +49,17 @@ const Profile = () => {
       dispatch(setUserTweets([]));
     };
   }, [id]);
+
+  useEffect(() => {
+    if (selectedUser && user) {
+      const isFollowing = selectedUser.followers?.some(
+        (follower) => follower.id === user.id
+      );
+      setIsVisible(
+        selectedUser.isvisible || isFollowing || user.id === selectedUser.id
+      );
+    }
+  }, [selectedUser, user]);
 
   const handleTabChange = (tab) => {
     if (activeTab !== tab) {
@@ -86,10 +100,10 @@ const Profile = () => {
       }
     };
 
-    if (selectedUser?.id) {
+    if (selectedUser?.id && isVisible) {
       fetchTweets();
     }
-  }, [activeTab, selectedUser]);
+  }, [activeTab, selectedUser, isVisible]);
 
   return (
     <section className="">
@@ -113,9 +127,11 @@ const Profile = () => {
             />
             <div className=" text-sm">
               <p className="font-bold capitalize">{selectedUser?.username}</p>
-              <span className=" text-xs text-[#5F6468]">
-                {selectedUser.tweets?.length || 0} Gonderi
-              </span>
+              {isVisible && (
+                <span className=" text-xs text-[#5F6468]">
+                  {selectedUser.tweets?.length || 0} Gonderi
+                </span>
+              )}
             </div>
           </div>
 
@@ -167,71 +183,80 @@ const Profile = () => {
           </div>
 
           {/* tweets */}
-          <div className=" grid">
-            <div className=" w-full grid grid-cols-3">
-              <div
-                className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
-                onClick={() => handleTabChange("Gonderiler")}
-              >
-                <p
-                  className={`${
-                    activeTab === "Gonderiler"
-                      ? "border-b-4 border-[#1D9BF0]"
-                      : ""
-                  } w-fit p-2 font-bold`}
+          {isVisible ? (
+            <div className=" grid">
+              <div className=" w-full grid grid-cols-3">
+                <div
+                  className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
+                  onClick={() => handleTabChange("Gonderiler")}
                 >
-                  Gonderiler
-                </p>
+                  <p
+                    className={`${
+                      activeTab === "Gonderiler"
+                        ? "border-b-4 border-[#1D9BF0]"
+                        : ""
+                    } w-fit p-2 font-bold`}
+                  >
+                    Gonderiler
+                  </p>
+                </div>
+                <div
+                  className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
+                  onClick={() => handleTabChange("Begenilen")}
+                >
+                  <p
+                    className={`${
+                      activeTab === "Begenilen"
+                        ? "border-b-4 border-[#1D9BF0]"
+                        : ""
+                    } w-fit p-2 font-bold`}
+                  >
+                    Begenilen
+                  </p>
+                </div>
+                <div
+                  className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
+                  onClick={() => handleTabChange("KaydEdilen")}
+                >
+                  <p
+                    className={`${
+                      activeTab === "KaydEdilen"
+                        ? "border-b-4 border-[#1D9BF0]"
+                        : ""
+                    } w-fit p-2 font-bold`}
+                  >
+                    Mark
+                  </p>
+                </div>
               </div>
-              <div
-                className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
-                onClick={() => handleTabChange("Begenilen")}
-              >
-                <p
-                  className={`${
-                    activeTab === "Begenilen"
-                      ? "border-b-4 border-[#1D9BF0]"
-                      : ""
-                  } w-fit p-2 font-bold`}
-                >
-                  Begenilen
-                </p>
-              </div>
-              <div
-                className="flex items-center justify-center cursor-pointer hover:bg-[#181818] rounded transition-colors"
-                onClick={() => handleTabChange("KaydEdilen")}
-              >
-                <p
-                  className={`${
-                    activeTab === "KaydEdilen"
-                      ? "border-b-4 border-[#1D9BF0]"
-                      : ""
-                  } w-fit p-2 font-bold`}
-                >
-                  Mark
-                </p>
+              <div>
+                {tweetLoading && (
+                  <div className="flex items-center justify-center my-4">
+                    <span className="loading loading-spinner loading-lg"></span>
+                  </div>
+                )}
+                {!tweetLoading && userTweets.length > 0 && (
+                  <div className="w-full grid gap-5 p-3">
+                    {userTweets.map((tweet) => (
+                      <Tweet key={tweet.id} data={tweet} options={false} />
+                    ))}
+                  </div>
+                )}
+                {!tweetLoading && userTweets.length === 0 && (
+                  <div className="flex items-center justify-center my-4">
+                    <p>Henüz {activeTab} bulunmamaktadır.</p>
+                  </div>
+                )}
               </div>
             </div>
-            <div>
-              {tweetLoading && (
-                <div className="flex items-center justify-center my-4">
-                  <span className="loading loading-spinner loading-lg"></span>
-                </div>
-              )}
-              {!tweetLoading && userTweets.length > 0 && (
-                <div className="w-full grid gap-5 p-3">
-                  {userTweets.map((tweet) => (
-                    <Tweet key={tweet.id} data={tweet} options={false} />
-                  ))}
-                </div>
-              )}
-              {!tweetLoading && userTweets.length === 0 && (
-                <div className="flex items-center justify-center my-4">
-                  <p>Henüz {activeTab} bulunmamaktadır.</p>
-                </div>
-              )}
+          ) : (
+            <div className="w-full flex items-center justify-center my-4 border-t border-[#2F3336]">
+              <p className=" text-center mt-5 line-clamp-2">
+                Bu kullanici gizli bir hesaba sahiptir. Takip isteginizi
+                bekliyor.
+              </p>
             </div>
-          </div>
+          )}
         </div>
       )}
       {openUpdate && <UpdateProfile close={() => setOpenUpdate(false)} />}

@@ -97,7 +97,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
     const comparePass = await bcrypt.compare(password, existUser.password);
     if (!comparePass) {
-      return next(new appError("Invalid password", 400));
+      return next(new appError("email or password are invalid", 400));
     }
 
     //token
